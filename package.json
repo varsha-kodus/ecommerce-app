@@ -1,0 +1,28 @@
+{
+  "name": "ecommerce-app",
+  "version": "1.0.0",
+  "description": "Creating Ecommerce site ",
+  "main": "server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.ts",
+    "build": "tsc",
+    "start": "node src/server.js"
+  },
+  "author": "Varsha Ramani",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.24",
+    "@types/pg": "^8.15.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
