@@ -13,6 +13,9 @@ export async function initTables() {
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
             CREATE TYPE user_status AS ENUM ('active', 'inactive');
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'shop_status') THEN
+            CREATE TYPE shop_status AS ENUM ('active', 'inactive');
+            END IF;
         END$$;
         `);
 
@@ -33,6 +36,33 @@ export async function initTables() {
         `);
 
         console.log('Users table created (or already exists).');
+
+         await pool.query(`
+            CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(id),
+            token TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        console.log('refresh_tokens table created (or already exists).');
+
+         await pool.query(`
+            CREATE TABLE IF NOT EXISTS shops (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            owner_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+            shop_name VARCHAR(40) NOT NULL,
+            description TEXT,
+            logo VARCHAR(255),
+            address VARCHAR(255),
+            status shop_status NOT NULL DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        console.log('shops table created (or already exists).');
         // return true;
     }catch(error){
         console.log('Error in initializing tables:', error);

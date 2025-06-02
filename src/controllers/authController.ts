@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import authService from "../services/authService";
 import { body, validationResult } from "express-validator";
 import { pool } from '../config/dbConnection'; 
+import { AuthenticatedRequest } from "../types/auth";
 
 // Helper to get one error per field
 const getFieldErrors = (req: Request): Record<string, string> => {
@@ -85,3 +86,48 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
 };
+
+export const currentUser = async (req: Request, res: Response) => {
+     const authUser = req as AuthenticatedRequest;
+     const userData = await authService.currentUser(authUser.user.id);
+     res.status(200).json({ ...userData });
+}
+
+export const refreshAccessToken = async (req: Request, res: Response) : Promise<void> => {
+  await body("refreshToken")
+    .notEmpty()
+    .withMessage("Refresh token is required")
+    .run(req);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ success: false, errors: getFieldErrors(req) });
+  }
+
+  const { refreshToken } = req.body;
+
+  try {
+    const { newAccessToken, newRefreshToken } = await authService.refreshAccessToken(refreshToken);
+
+    res.status(200).json({ 
+      accessToken: newAccessToken, 
+      refreshToken: newRefreshToken 
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const logout = async (req: Request, res: Response) : Promise<void> => {
+    const refreshToken = req.body?.refreshToken ?? null;
+
+      const authUser = req as AuthenticatedRequest;
+
+    try {
+      await authService.logout(refreshToken, authUser.user.id);
+
+      res.status(200).json({ message: "Logged out successfully" });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+}

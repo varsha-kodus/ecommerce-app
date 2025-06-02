@@ -1,18 +1,21 @@
 import express from "express";
-import dotenv from 'dotenv';
-import { testConnection } from "./config/dbConnection";
-import authRoutes from "./routes/authRoutes";
+import dotenv from "dotenv";
+import authRoute from "./routes/authRoutes";
+import commonRoute from "./routes/route";
+
+dotenv.config();
 
 const app = express();
 
-// Load environment variables
-dotenv.config();
+// Body parsers (for JSON and urlencoded)
 app.use(express.json());
-testConnection(); // database connection
+app.use(express.urlencoded({ extended: true }));
 
-app.use("/api",authRoutes);
+// Use routes
+app.use(authRoute);
+app.use(commonRoute);
 
 const port = process.env.PORT || 3000;
-app.listen(port,()=>{
-    console.log(`Server running on port ${port}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
