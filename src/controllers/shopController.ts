@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import shopService from "../services/shopService";
 import { body, validationResult } from "express-validator";
-import { pool } from '../config/dbConnection'; 
 import { AuthenticatedRequest } from "../types/auth";
-import { error } from "console";
 
 // Helper to get one error per field
 const getFieldErrors = (req: Request): Record<string, string> => {

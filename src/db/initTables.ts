@@ -19,6 +19,15 @@ export async function initTables() {
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'category_status') THEN
             CREATE TYPE category_status AS ENUM ('active', 'inactive');
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'discount_type') THEN
+            CREATE TYPE discount_type AS ENUM ('flat', 'percentage');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'product_status') THEN
+            CREATE TYPE product_status AS ENUM ('active', 'inactive', 'out_of_stock');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'unit_type') THEN
+            CREATE TYPE unit_type AS ENUM ('unit', 'kg', 'litre', 'size');
+            END IF;
         END$$;
         `);
 
@@ -79,6 +88,26 @@ export async function initTables() {
             )
         `);
         console.log('category table created (or already exists).');
+
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS products (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+                category_id UUID NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
+                title VARCHAR(100) NOT NULL,
+                description TEXT,
+                slug VARCHAR(100) UNIQUE NOT NULL,
+                discount_type discount_type,
+                discount_amount DECIMAL(10,2),
+                status product_status NOT NULL DEFAULT 'active',
+                unit_type unit_type NOT NULL DEFAULT 'size',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        console.log('products table created (or already exists).');
 
         // return true;
     }catch(error){
