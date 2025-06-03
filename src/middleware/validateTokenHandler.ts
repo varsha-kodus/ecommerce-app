@@ -15,6 +15,7 @@ interface AuthenticatedRequest extends Request {
 const validateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeaderRaw = req.headers.authorization || req.headers.Authorization;
+    
     const authHeader = Array.isArray(authHeaderRaw) ? authHeaderRaw[0] : authHeaderRaw;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -35,9 +36,7 @@ const validateToken = async (req: Request, res: Response, next: NextFunction) =>
       });
     });
 
-    if (typeof decoded === "object" && decoded !== null && "user" in decoded) {
-        console.log('hiii');
-        
+    if (typeof decoded === "object" && decoded !== null && "user" in decoded) {        
       (req as AuthenticatedRequest).user = decoded.user;
       next();
     } else {

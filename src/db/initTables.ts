@@ -16,6 +16,9 @@ export async function initTables() {
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'shop_status') THEN
             CREATE TYPE shop_status AS ENUM ('active', 'inactive');
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'category_status') THEN
+            CREATE TYPE category_status AS ENUM ('active', 'inactive');
+            END IF;
         END$$;
         `);
 
@@ -63,6 +66,20 @@ export async function initTables() {
         `);
 
         console.log('shops table created (or already exists).');
+
+         await pool.query(`
+            CREATE TABLE IF NOT EXISTS categories (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            category_name VARCHAR(50) NOT NULL,
+            slug VARCHAR(50) UNIQUE NOT NULL,
+            parent_id UUID REFERENCES categories(id),
+            status category_status NOT NULL DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('category table created (or already exists).');
+
         // return true;
     }catch(error){
         console.log('Error in initializing tables:', error);

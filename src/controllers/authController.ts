@@ -27,7 +27,7 @@ export const registerUser = async (req: Request, res: Response) => {
             const query = "SELECT 1 FROM users WHERE email = $1 LIMIT 1";
             const result = await pool.query(query, [value]);
             if (result.rowCount !== null && result.rowCount > 0) {
-            throw new Error("User with this email already exists1!");
+            throw new Error("User with this email already exists!");
             }
             return true;
         })

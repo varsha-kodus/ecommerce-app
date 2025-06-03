@@ -52,7 +52,7 @@ const login = async ({ email, password }: LoginInput) => {
     
     // Generate JWT
     const accessToken = jwt.sign(
-        { user: { id: user.id, name: user.name, email: user.email } },
+        { user: { id: user.id, name: user.name, email: user.email, role: user.role } },
         process.env.ACCESS_TOKEN_SECRET!,
         { expiresIn: "15min" }
     );
@@ -105,7 +105,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
   const decoded = jwt.verify(
     refreshToken,
     process.env.REFRESH_TOKEN_SECRET!
-  ) as { user: { id: string; name: string; email: string } };
+  ) as { user: { id: string; name: string; email: string; role:string } };
 
   const user = decoded.user;
 

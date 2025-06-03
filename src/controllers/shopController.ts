@@ -3,6 +3,7 @@ import shopService from "../services/shopService";
 import { body, validationResult } from "express-validator";
 import { pool } from '../config/dbConnection'; 
 import { AuthenticatedRequest } from "../types/auth";
+import { error } from "console";
 
 // Helper to get one error per field
 const getFieldErrors = (req: Request): Record<string, string> => {
@@ -16,7 +17,6 @@ const getFieldErrors = (req: Request): Record<string, string> => {
 };
 
 export const createShop = async (req: Request, res: Response) : Promise<void> => {
-  console.log(req.body);
   
     await body("shop_name")
       .notEmpty().withMessage("Shop name is required")
@@ -45,7 +45,7 @@ export const createShop = async (req: Request, res: Response) : Promise<void> =>
         const authUser = req as AuthenticatedRequest;
         const existingShop = await shopService.getShopByOwnerId(authUser.user.id);
         if (existingShop) {
-          res.status(403).json({ error: "You already own a shop." });
+          res.status(403).json({ message: "You already own a shop." });
         }
 
         const newShop = await shopService.createShop({
@@ -62,12 +62,12 @@ export const createShop = async (req: Request, res: Response) : Promise<void> =>
         });
 
       } catch (err: any) {
-        console.error("Shop creation error:", err);
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(500).json({ success: false, message: err.message });
       }
 };
 
 export const updateShop = async (req: Request, res: Response): Promise<void> => {
+
   // Validate input
   await body("shop_name")
     .optional()
@@ -100,8 +100,14 @@ export const updateShop = async (req: Request, res: Response): Promise<void> => 
     // Get existing shop by id
     const shop = await shopService.getShopById(shopId);
     if (!shop) {
-      res.status(404).json({ error: "Shop not found" });
+      res.status(404).json({ success: false, message: "Shop not found" });
       return;
+    }
+    const authUser = req as AuthenticatedRequest;
+    if(authUser.user.role == 'user'){
+      if(shop.owner_id !== authUser.user.id){
+          res.status(403).json({ success: false, message: "Access forbidden.. Only shop's owner or admin allow to update shop data" });
+      }
     }
 
     // Prepare update data only for fields present in body
@@ -112,7 +118,7 @@ export const updateShop = async (req: Request, res: Response): Promise<void> => 
     if (req.body.address !== undefined) updateData.address = req.body.address;
 
     if (Object.keys(updateData).length === 0) {
-      res.status(400).json({ error: "No valid fields provided for update" });
+      res.status(400).json({ success: false, message: "No valid fields provided for update" });
       return;
     }
 
@@ -120,7 +126,7 @@ export const updateShop = async (req: Request, res: Response): Promise<void> => 
     const updatedShop = await shopService.updateShop(shopId, updateData);
 
     if (!updatedShop) {
-      res.status(500).json({ error: "Failed to update shop" });
+      res.status(500).json({ success: false, message: "Failed to update shop" });
       return;
     }
 
@@ -128,8 +134,90 @@ export const updateShop = async (req: Request, res: Response): Promise<void> => 
       message: "Shop updated successfully",
       shop: updatedShop,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error updating shop:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ success: false, message: err.message });
   }
+
 };
+
+export const getShop = async (req: Request, res: Response): Promise<void> => {
+  try{
+    const shop = await shopService.getShopById(req.params.id);
+
+    if (!shop) {
+      res.status(404).json({ success: false, message: "Shop not found" });
+      return;
+    }else{
+      res.status(201).json({
+          shop: shop
+        });
+    }
+  } catch (err : any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+export const getShops = async (req: Request, res: Response): Promise<void> => {
+  try {
+    
+    const status = req.query.status as string | undefined;
+    const ownerId = req.query.owner_id as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const result = await shopService.getShops({
+      status,
+      ownerId: ownerId,
+      limit: Number(limit),
+      offset: Number(offset)
+    });
+
+    res.status(200).json(result);
+  } catch (err: any) {
+    console.error('Error fetching shops:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+export const updateShopStatus = async (req: Request, res: Response): Promise<void> => {
+  
+  await body('status')
+  .isIn(['active', 'inactive'])
+  .withMessage('Status must be either active or inactive')
+  .run(req);
+  
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ success: false, errors: getFieldErrors(req) });
+    return;
+  }
+  
+  const { status } = req.body;
+  try {
+    const shop = await shopService.getShopById(req.params.id);
+    if (!shop) {
+      res.status(404).json({ success: false, message: "Shop not found" });
+      return;
+    }
+    const authUser = req as AuthenticatedRequest;
+    if(authUser.user.role == 'user'){
+      if(shop.owner_id !== authUser.user.id){
+          res.status(403).json({ success: false, message: "Access forbidden.. Only shop's owner or admin allow to update shop data" });
+      }
+    }
+
+    const updatedStatus = await shopService.updateShopStatus(req.params.id, status);
+
+    if(!updatedStatus){
+      res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    res.status(200).json({
+      message: 'Shop status updated',
+      status: updatedStatus,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
