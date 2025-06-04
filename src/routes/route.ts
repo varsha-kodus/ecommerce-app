@@ -4,6 +4,7 @@ import { createShop, updateShop, getShop, getShops, updateShopStatus } from "../
 import { createCategory, updateCategory, getCategory, getCategories, updateCategoryStatus } from "../controllers/categoryController";
 import { createProduct, updateProduct, getProduct, getProducts, updateProductStatus } from "../controllers/productController";
 import { createProductVariant, updateProductVariant, getProductVariant } from "../controllers/productVariantController";
+import { addCartItem, getCartItem, updateCartItem, deleteCartItem, deleteAllCartItem } from "../controllers/cartController";
 
 const router = express.Router();
 
@@ -32,5 +33,12 @@ router.patch("/api/products/:id/status", validateToken, updateProductStatus);
 router.post("/api/products/:product_id/variants", validateToken, createProductVariant);
 router.patch("/api/variants/:id", validateToken ,updateProductVariant);
 router.get("/api/products/:product_id/variants", getProductVariant);
+
+//cart
+router.post("/api/cart", validateToken , addCartItem);
+router.get("/api/cart", validateToken , getCartItem);
+router.patch("/api/cart/:cart_item_id", validateToken , updateCartItem);
+router.delete("/api/cart/:cart_item_id", validateToken , deleteCartItem);
+router.delete("/api/cart", validateToken , deleteAllCartItem);
 
 export default router;

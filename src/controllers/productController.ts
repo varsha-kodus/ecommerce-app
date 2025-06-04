@@ -130,6 +130,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     .run(req);
 
   await body('title')
+    .optional({ checkFalsy: false })
     .isLength({ min: 2, max: 100 }).withMessage("title must be between 2 and 100 characters")
     .run(req);
 
