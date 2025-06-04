@@ -98,13 +98,14 @@ export const updateShop = async (req: Request, res: Response): Promise<void> => 
     // Get existing shop by id
     const shop = await shopService.getShopById(shopId);
     if (!shop) {
-      res.status(404).json({ success: false, message: "Shop not found" });
+      res.status(404).json({ success: false, message: "Shop data not found" });
       return;
     }
     const authUser = req as AuthenticatedRequest;
     if(authUser.user.role == 'user'){
       if(shop.owner_id !== authUser.user.id){
           res.status(403).json({ success: false, message: "Access forbidden.. Only shop's owner or admin allow to update shop data" });
+          return;
       }
     }
 
@@ -144,7 +145,7 @@ export const getShop = async (req: Request, res: Response): Promise<void> => {
     const shop = await shopService.getShopById(req.params.id);
 
     if (!shop) {
-      res.status(404).json({ success: false, message: "Shop not found" });
+      res.status(404).json({ success: false, message: "Shop data not found" });
       return;
     }else{
       res.status(201).json({
@@ -202,13 +203,15 @@ export const updateShopStatus = async (req: Request, res: Response): Promise<voi
     if(authUser.user.role == 'user'){
       if(shop.owner_id !== authUser.user.id){
           res.status(403).json({ success: false, message: "Access forbidden.. Only shop's owner or admin allow to update shop data" });
+          return;
       }
     }
 
     const updatedStatus = await shopService.updateShopStatus(req.params.id, status);
 
     if(!updatedStatus){
-      res.status(404).json({ success: false, message: 'Shop not found' });
+      res.status(400).json({ success: false, message: 'Something went wrong during update' });
+      return;
     }
 
     res.status(200).json({

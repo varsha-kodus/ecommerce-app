@@ -109,6 +109,33 @@ export async function initTables() {
 
         console.log('products table created (or already exists).');
 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS product_variants (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                label VARCHAR(15) NOT NULL,
+                quantity INTEGER,
+                base_price DECIMAL(10,2),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+         console.log('product_variants table created (or already exists).');
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS product_gallery (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                image_url VARCHAR(255) NOT NULL,
+                is_primary BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        console.log('product_gallery table created (or already exists).');
+
         // return true;
     }catch(error){
         console.log('Error in initializing tables:', error);

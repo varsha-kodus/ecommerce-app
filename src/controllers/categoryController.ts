@@ -65,6 +65,7 @@ export const createCategory = async (req: Request, res: Response) : Promise<void
         const authUser = req as AuthenticatedRequest;
         if(authUser.user.role != 'admin'){
             res.status(403).json({ success: false, message: "Access forbidden.. Only admin allow to create category" });
+            return;
         }
 
         const { category_name, slug, parent_id } = req.body;
@@ -127,7 +128,8 @@ export const updateCategory = async (req: Request, res: Response) : Promise<void
     try {
         const authUser = req as AuthenticatedRequest;
         if(authUser.user.role != 'admin'){
-            res.status(403).json({ success: false, message: "Access forbidden.. Only admin allow to create category" });
+            res.status(403).json({ success: false, message: "Access forbidden.. Only admin allow to update category" });
+            return;
         }
 
          // Get existing shop by id
@@ -189,10 +191,10 @@ export const getCategories = async (req: Request, res: Response): Promise<void> 
         const category = await categoryService.getCategories(req.query.flat);
 
         if (!category) {
-        res.status(404).json({ success: false, message: "Categories not found" });
-        return;
+            res.status(404).json({ success: false, message: "Categories not found" });
+            return;
         }else{
-        res.status(200).json({
+            res.status(200).json({
             categories: category
         });
         }
@@ -218,13 +220,14 @@ export const updateCategoryStatus = async (req: Request, res: Response): Promise
    const authUser = req as AuthenticatedRequest;
     if(authUser.user.role != 'admin'){
         res.status(403).json({ success: false, message: "Access forbidden.. Only admin allow to create category" });
+        return;
     }
 
   try {
     const updatedStatus = await categoryService.updateCategoryStatus(req.params.id, status);
 
     if(!updatedStatus){
-      res.status(404).json({ success: false, message: 'Category not found' });
+      res.status(400).json({ success: false, message: 'Something went wrong during update' });
       return;
     }
 

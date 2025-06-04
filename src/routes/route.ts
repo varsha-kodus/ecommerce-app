@@ -2,7 +2,8 @@ import express from "express";
 import validateToken from "../middleware/validateTokenHandler";
 import { createShop, updateShop, getShop, getShops, updateShopStatus } from "../controllers/shopController";
 import { createCategory, updateCategory, getCategory, getCategories, updateCategoryStatus } from "../controllers/categoryController";
-import { createProduct } from "../controllers/productController";
+import { createProduct, updateProduct, getProduct, getProducts, updateProductStatus } from "../controllers/productController";
+import { createProductVariant, updateProductVariant, getProductVariant } from "../controllers/productVariantController";
 
 const router = express.Router();
 
@@ -22,5 +23,14 @@ router.patch("/api/categories/:id/status", validateToken, updateCategoryStatus);
 
 //products
 router.post("/api/products", validateToken ,createProduct);
+router.patch("/api/products/:id", validateToken ,updateProduct);
+router.get("/api/products/:id" ,getProduct);
+router.get("/api/products", getProducts);
+router.patch("/api/products/:id/status", validateToken, updateProductStatus);
+
+//product variant
+router.post("/api/products/:product_id/variants", validateToken, createProductVariant);
+router.patch("/api/variants/:id", validateToken ,updateProductVariant);
+router.get("/api/products/:product_id/variants", getProductVariant);
 
 export default router;
