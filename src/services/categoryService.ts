@@ -19,7 +19,7 @@ import { pool } from '../config/dbConnection';
   children: NestedCategory[];
 }
 
-export const createCategory = async (CategoryData: Partial<Category>): Promise<any> => {
+ const createCategory = async (CategoryData: Partial<Category>): Promise<any> => {
     const { category_name, slug, parent_id } = CategoryData;
   const result = await pool.query(
         `INSERT INTO categories (category_name, slug, parent_id)
@@ -138,7 +138,7 @@ const updateCategory =  async (categoryId: string, updateData: Partial<Category>
     }
 };
 
-export const updateCategoryStatus = async (id:string, status:string): Promise<any> => {
+ const updateCategoryStatus = async (id:string, status:string): Promise<any> => {
   const query = `
     UPDATE categories
     SET status = $1

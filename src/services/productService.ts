@@ -24,7 +24,7 @@ interface GetProductsParams {
   offset: number;
 }
 
-export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
+const createProduct = async (productData: Partial<Product>): Promise<Product> => {
    const keys: string[] = [];
   const values: any[] = [];
   const placeholders: string[] = [];
@@ -48,7 +48,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
   return result.rows[0];
 };
 
-export const getProductById = async (productId: string): Promise<any | null> => {
+const getProductById = async (productId: string): Promise<any | null> => {
   const result = await pool.query(
     `
     SELECT 
@@ -59,10 +59,14 @@ export const getProductById = async (productId: string): Promise<any | null> => 
       product_variants.label,
       product_variants.quantity,
       product_variants.base_price,
-      product_variants.created_at as variant_created_at
+      product_variants.created_at as variant_created_at,
+      product_gallery.id as gallery_id,
+      product_gallery.image_url,
+      product_gallery.is_primary
     FROM products
-    JOIN shops ON shops.id = products.shop_id
-    JOIN product_variants ON product_variants.product_id = products.id
+    LEFT JOIN shops ON shops.id = products.shop_id
+    LEFT JOIN product_variants ON product_variants.product_id = products.id
+    LEFT JOIN product_gallery ON product_gallery.product_id = products.id
     WHERE products.id = $1
     `,
     [productId]
@@ -72,39 +76,62 @@ export const getProductById = async (productId: string): Promise<any | null> => 
 
   const firstRow = result.rows[0];
 
-  // Extract product and shop info from the first row
   const {
     owner_id,
     shop_name,
-    variant_id, // will not be used here
+    variant_id, // not used here directly
     label,
     quantity,
     base_price,
     variant_created_at,
+    gallery_id,
+    image_url,
+    is_primary,
     ...productData
   } = firstRow;
 
-  // Collect all variants
-  const variants = result.rows.map(row => ({
-    id: row.variant_id,
-    label: row.label,
-    quantity: row.quantity,
-    base_price: row.base_price,
-    createdAt: row.variant_created_at
-  }));
+  // Deduplicate variants by variant_id
+  const variantsMap = new Map<number, any>();
+  // Deduplicate gallery images by gallery_id
+  const galleryMap = new Map<number, any>();
+
+  for (const row of result.rows) {
+    if (row.variant_id && !variantsMap.has(row.variant_id)) {
+      variantsMap.set(row.variant_id, {
+        id: row.variant_id,
+        label: row.label,
+        quantity: row.quantity,
+        base_price: row.base_price,
+        createdAt: row.variant_created_at,
+      });
+    }
+
+    if (row.gallery_id && !galleryMap.has(row.gallery_id)) {      
+      galleryMap.set(row.gallery_id, {
+        id: row.gallery_id,
+        image_url: row.image_url,
+        is_primary: row.is_primary,
+      });
+    }
+  }
+  
+  const variants = Array.from(variantsMap.values());
+  const galleryImage = Array.from(galleryMap.values());
 
   return {
     ...productData,
     shop: {
       owner_id,
-      shop_name
+      shop_name,
     },
-    variants
+    variants,
+    galleryImage,
   };
 };
 
+
 // Update shop details
-export const updateProduct = async (productId: string, updateData: Partial<Product>): Promise<Product> => {
+const updateProduct = async (productId: string, updateData: Partial<Product>): Promise<Product> => {
   // Build dynamic SET clause for update based on fields present in updateData
   const fields = [];
   const values = [];
@@ -131,7 +158,7 @@ export const updateProduct = async (productId: string, updateData: Partial<Produ
   return result.rows[0] || null;
 }
 
-export const getProducts = async ({
+const getProducts = async ({
   status,
   shopId,
   categoryId,
@@ -195,7 +222,7 @@ export const getProducts = async ({
   };
 };
 
-export const updateProductStatus = async (id:string, status:string): Promise<any> => {
+const updateProductStatus = async (id:string, status:string): Promise<any> => {
   const query = `
     UPDATE products
     SET status = $1

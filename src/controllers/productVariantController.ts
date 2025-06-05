@@ -56,8 +56,10 @@ export const createProductVariant = async (req: Request, res: Response) : Promis
         }
         
         const authUser = req as AuthenticatedRequest;
+        console.log(product,'product');
+        
         if(authUser.user.role == 'user'){
-            if(product.owner_id !== authUser.user.id){
+            if(product.shop.owner_id !== authUser.user.id){
                 res.status(403).json({ success: false, message: "Access forbidden.. Only product's owner or admin allow to create product's variant" });
                 return;
             }
@@ -117,7 +119,7 @@ export const updateProductVariant = async (req: Request, res: Response): Promise
         
         const authUser = req as AuthenticatedRequest;
         if(authUser.user.role == 'user'){
-          if(product.owner_id !== authUser.user.id){          
+          if(product.shop.owner_id !== authUser.user.id){          
               res.status(403).json({ success: false, message: "Access forbidden.. Only product's owner or admin allow to update product's variant" });
               return;
           }

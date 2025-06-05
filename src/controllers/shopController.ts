@@ -103,7 +103,9 @@ export const updateShop = async (req: Request, res: Response): Promise<void> => 
     }
     const authUser = req as AuthenticatedRequest;
     if(authUser.user.role == 'user'){
-      if(shop.owner_id !== authUser.user.id){
+      // console.log(shop, authUser.user.id);
+      
+      if(shop.owner.id !== authUser.user.id){
           res.status(403).json({ success: false, message: "Access forbidden.. Only shop's owner or admin allow to update shop data" });
           return;
       }

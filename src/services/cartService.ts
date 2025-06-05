@@ -15,7 +15,7 @@ interface CartItem{
     quantity: number;
 }
 
-export const createCartIfNotExists = async (userId: string): Promise<Cart|null> => {
+const createCartIfNotExists = async (userId: string): Promise<Cart|null> => {
     const result = await pool.query(`
         SELECT * FROM carts WHERE user_id = $1`,[userId]
     );
@@ -31,7 +31,7 @@ export const createCartIfNotExists = async (userId: string): Promise<Cart|null> 
     return newCart.rows[0];
 }
 
-export const addCartItem = async ({
+const addCartItem = async ({
   userId,
   cartId,
   productId,
@@ -104,18 +104,6 @@ export const addCartItem = async ({
       ]
     );
 
-    await client.query(
-        `UPDATE product_variants
-        SET quantity = quantity - $1
-        WHERE id = $2 AND quantity >= $1
-        RETURNING id;`,
-        [
-           quantity,
-           variantId
-        ]
-    );
-
-
     await client.query("COMMIT");
     return cariItemRes.rows[0];
   } catch (err) {
@@ -126,7 +114,7 @@ export const addCartItem = async ({
   }
 };
 
-export const getCartItem = async (userId: string): Promise<Cart|any> => {
+const getCartItem = async (userId: string): Promise<Cart|any> => {
     const result = await pool.query(
     `SELECT
         c.id AS cart_id,
@@ -190,7 +178,7 @@ export const getCartItem = async (userId: string): Promise<Cart|any> => {
 
 }
 
-export const updateCartItem = async (cartItemId: string, quantity: number): Promise<any> => {
+const updateCartItem = async (cartItemId: string, quantity: number): Promise<any> => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -239,14 +227,6 @@ export const updateCartItem = async (cartItemId: string, quantity: number): Prom
         [quantity, totalPrice, cartItemId]
         );
 
-        // Step 4: Adjust variant quantity
-        await client.query(
-        `UPDATE product_variants
-        SET quantity = quantity - $1
-        WHERE id = $2`,
-        [quantityDiff, variantId]
-        );
-
         await client.query("COMMIT");
 
         return {
@@ -264,8 +244,8 @@ export const updateCartItem = async (cartItemId: string, quantity: number): Prom
     }
 };
 
-export const deleteCartItem = async (userId: string, cartItemId: string): Promise<any> => {
-    // 1. Fetch quantity and variant_id before deleting
+const deleteCartItem = async (userId: string, cartItemId: string): Promise<any> => {
+    // Fetch quantity and variant_id before deleting
     const itemRes = await pool.query(
         `SELECT quantity, variant_id FROM cart_items WHERE id = $1 AND user_id = $2`,
         [cartItemId.trim(), userId.trim()]
@@ -278,29 +258,21 @@ export const deleteCartItem = async (userId: string, cartItemId: string): Promis
         };
     }
 
-    const { quantity, variantId } = itemRes.rows[0];
-
-    // 2. Delete the cart item
+    //Delete the cart item
     const deleteRes = await pool.query(
         `DELETE FROM cart_items WHERE id = $1 AND user_id = $2 RETURNING id`,
         [cartItemId.trim(), userId.trim()]
     );
 
-    // 3. Restore the variant stock
-    await pool.query(
-        `UPDATE product_variants SET quantity = quantity + $1 WHERE id = $2`,
-        [quantity, variantId]
-    );
-
     return deleteRes.rows[0];
 }
 
-export const deleteAllCartItem = async (userId: string): Promise<any> => {
+const deleteAllCartItem = async (userId: string): Promise<any> => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // 1. Get all cart items for user
+    // Get all cart items for user
     const itemsRes = await client.query(
       `SELECT variant_id, quantity FROM cart_items WHERE user_id = $1`,
       [userId.trim()]
@@ -313,15 +285,7 @@ export const deleteAllCartItem = async (userId: string): Promise<any> => {
       };
     }
 
-    // 2. Restore quantity for each variant
-    for (const item of itemsRes.rows) {
-      await client.query(
-        `UPDATE product_variants SET quantity = quantity + $1 WHERE id = $2`,
-        [item.quantity, item.variant_id]
-      );
-    }
-
-    // 3. Delete all cart items for this user
+    // Delete all cart items for this user
     const deleteRes = await client.query(
       `DELETE FROM cart_items WHERE user_id = $1 RETURNING id`,
       [userId.trim()]

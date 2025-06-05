@@ -10,7 +10,7 @@ import { pool } from '../config/dbConnection';
   updated_at?: string;
 }
 
-export const createProductVariant = async (productVariant: Partial<ProductVariant>): Promise<ProductVariant> => {
+const createProductVariant = async (productVariant: Partial<ProductVariant>): Promise<ProductVariant> => {
     const { product_id, label, quantity, base_price } = productVariant;
 
     const result = await pool.query(
@@ -22,7 +22,7 @@ export const createProductVariant = async (productVariant: Partial<ProductVarian
     return result.rows[0];
 }
 
-export const getVariantById = async (variantId: string): Promise<any | null> => {
+const getVariantById = async (variantId: string): Promise<any | null> => {
   const result = await pool.query(
     `
     SELECT 
@@ -43,7 +43,7 @@ export const getVariantById = async (variantId: string): Promise<any | null> => 
   };
 };
 
-export const updateProductVariant = async (variantId: string, updateData: Partial<ProductVariant>): Promise<ProductVariant> => {
+const updateProductVariant = async (variantId: string, updateData: Partial<ProductVariant>): Promise<ProductVariant> => {
   // Build dynamic SET clause for update based on fields present in updateData
   const fields = [];
   const values = [];
@@ -71,7 +71,7 @@ export const updateProductVariant = async (variantId: string, updateData: Partia
   return result.rows[0] || null;
 }
 
-export const getProductVariants = async (productId: string): Promise<any> => {
+const getProductVariants = async (productId: string): Promise<any> => {
      const result = await pool.query(`
         SELECT 
         product_variants.* 

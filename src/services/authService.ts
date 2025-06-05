@@ -88,7 +88,7 @@ const currentUser = async (id: string) => {
     return { id: user['id'], name:user['name'], email: user['email'], role: user['role'], status: user['status'], profile_image: user['profile_image'] };
 }
 
-export const refreshAccessToken = async (refreshToken: string) => {
+const refreshAccessToken = async (refreshToken: string) => {
   const result = await pool.query(
     "SELECT * FROM refresh_tokens WHERE token = $1",
     [refreshToken]
@@ -132,7 +132,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
   return { newAccessToken, newRefreshToken };
 };
 
-export const logout = async (refreshToken: string, userId: string) => {
+ const logout = async (refreshToken: string, userId: string) => {
     if(refreshToken){
         const result = await pool.query(
             "SELECT * FROM refresh_tokens WHERE token = $1 AND user_id = $2",

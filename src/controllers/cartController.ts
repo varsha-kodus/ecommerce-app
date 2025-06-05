@@ -3,8 +3,6 @@ import cartService from "../services/cartService";
 import { param, body, validationResult } from "express-validator";
 import { AuthenticatedRequest } from "../types/auth";
 const { validate: isUUID } = require('uuid');
-import { pool } from '../config/dbConnection'; 
-import productService from "../services/productService";
 
 // Helper to get one error per field
 const getFieldErrors = (req: Request): Record<string, string> => {
@@ -64,7 +62,7 @@ export const addCartItem = async (req: Request, res: Response) : Promise<void> =
             cart_item,
         });
     }catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+        res.status(500).json({ success: false, message: err.message });
     }
 }
 

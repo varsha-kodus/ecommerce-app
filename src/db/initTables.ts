@@ -28,6 +28,12 @@ export async function initTables() {
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'unit_type') THEN
             CREATE TYPE unit_type AS ENUM ('unit', 'kg', 'litre', 'size');
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
+            CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'failed', 'refunded');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
+            CREATE TYPE order_status AS ENUM ('pending', 'shipped', 'delivered', 'cancelled');
+            END IF;
         END$$;
         `);
 
@@ -163,13 +169,49 @@ export async function initTables() {
             );
         `);
 
-    console.log('cart_items table created (or already exists).');
+        console.log('cart_items table created (or already exists).');
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS orders (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(id),
+            order_number VARCHAR(50) UNIQUE NOT NULL,
+            total_amount DECIMAL(10,2) NOT NULL,
+            payment_status payment_status NOT NULL DEFAULT 'pending',
+            order_status order_status NOT NULL DEFAULT 'pending',
+            billing_address TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        console.log('orders table created (or already exists).');
+
+         await pool.query(`
+            CREATE TABLE IF NOT EXISTS order_items (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+            product_id UUID NOT NULL REFERENCES products(id),
+            shop_id UUID NOT NULL REFERENCES shops(id),
+            variant_id UUID NOT NULL REFERENCES product_variants(id),
+            quantity INTEGER NOT NULL,
+            unit_price DECIMAL(10,2) NOT NULL,
+            total_price DECIMAL(10,2) NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        console.log('order_items table created (or already exists).');
+
 
         // return true;
     }catch(error){
         console.log('Error in initializing tables:', error);
         throw error;
     }
+
+
 }
 
  

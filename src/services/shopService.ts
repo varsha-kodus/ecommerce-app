@@ -19,12 +19,12 @@ interface GetShopsParams {
   offset: number;
 }
 
-export const getShopByOwnerId = async (ownerId: string): Promise<Shop | null> => {
+const getShopByOwnerId = async (ownerId: string): Promise<Shop | null> => {
   const result = await pool.query("SELECT * FROM shops WHERE owner_id = $1", [ownerId]);
   return result.rows[0] || null;
 };
 
-export const getShopById = async (shopId: string): Promise<any | null> => {
+const getShopById = async (shopId: string): Promise<any | null> => {
   const result = await pool.query(
     `
     SELECT 
@@ -55,7 +55,7 @@ export const getShopById = async (shopId: string): Promise<any | null> => {
 };
 
 
-export const createShop = async (shopData: Partial<Shop>): Promise<Shop> => {
+const createShop = async (shopData: Partial<Shop>): Promise<Shop> => {
   const { owner_id, shop_name, description, logo, address } = shopData;
   const result = await pool.query(
     `INSERT INTO shops (owner_id, shop_name, description, logo, address)
@@ -67,7 +67,7 @@ export const createShop = async (shopData: Partial<Shop>): Promise<Shop> => {
 };
 
 // Update shop details
-export const updateShop = async (shopId: string, updateData: Partial<Shop>): Promise<Shop> => {
+const updateShop = async (shopId: string, updateData: Partial<Shop>): Promise<Shop> => {
   // Build dynamic SET clause for update based on fields present in updateData
   const fields = [];
   const values = [];
@@ -94,7 +94,7 @@ export const updateShop = async (shopId: string, updateData: Partial<Shop>): Pro
   return result.rows[0] || null;
 }
 
-export const getShops = async ({
+const getShops = async ({
   status,
   ownerId,
   limit,
@@ -143,7 +143,7 @@ export const getShops = async ({
   };
 };
 
-export const updateShopStatus = async (id:string, status:string): Promise<any> => {
+const updateShopStatus = async (id:string, status:string): Promise<any> => {
   const query = `
     UPDATE shops
     SET status = $1
