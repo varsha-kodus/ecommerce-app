@@ -43,6 +43,26 @@ const addCartItem = async ({
   try {
     await client.query("BEGIN");
 
+    //Get product discount (optional)
+    const productRes = await client.query(
+      `SELECT id,discount_type, discount_amount, status FROM products WHERE id = $1 LIMIT 1`,
+      [productId]
+    );
+    if (productRes.rows.length === 0) throw new Error("Product not found");
+    
+    const { discount_type, discount_amount, status } = productRes.rows[0];
+     if (status === 'inactive') {
+      throw {
+        success: false,
+        message: "This product is inactive and cannot be added to the cart",
+      };
+    }else if(status === 'out_of_stock'){
+      throw {
+        success: false,
+        message: "This product is out_of_stock and cannot be added to the cart",
+      };
+    }
+
     // Get variant price
     const variantRes = await client.query(
       `SELECT id, base_price, quantity FROM product_variants WHERE id = $1 LIMIT 1`,
@@ -57,14 +77,7 @@ const addCartItem = async ({
         };
     }
 
-    //Get product discount (optional)
-    const productRes = await client.query(
-      `SELECT id,discount_type, discount_amount FROM products WHERE id = $1 LIMIT 1`,
-      [productId]
-    );
-    if (productRes.rows.length === 0) throw new Error("Product not found");
 
-    const { discount_type, discount_amount } = productRes.rows[0];
     const basePrice = parseFloat(variantRes.rows[0].base_price); // original price
     let unitPrice = basePrice;
 

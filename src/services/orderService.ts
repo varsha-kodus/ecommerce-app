@@ -333,10 +333,64 @@ const updateOrderStatus = async (orderId: string, status: string): Promise<any> 
   }
 };
 
+const getOrdersByShopId =  async (shopId: string): Promise<any> => {
+
+    const result = await pool.query(
+      `
+      SELECT 
+        o.id AS order_id,
+        o.user_id,
+        o.order_number,
+        o.order_status,
+        o.total_amount,
+        o.created_at,
+        oi.product_id,
+        oi.variant_id,
+        oi.quantity,
+        oi.unit_price,
+        oi.total_price
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      WHERE oi.shop_id = $1
+      ORDER BY o.created_at DESC
+      `,
+      [shopId]
+    );
+
+    // Group by order_id
+    const orderMap: any = {};
+
+    for (const row of result.rows) {
+      if (!orderMap[row.order_id]) {
+        orderMap[row.order_id] = {
+          order_id: row.order_id,
+          user_id: row.user_id,
+          order_number: row.order_number,
+          status: row.status,
+          // total_amount: parseFloat(row.total_amount),
+          created_at: row.created_at,
+          items: [],
+        };
+      }
+
+      orderMap[row.order_id].items.push({
+        product_id: row.product_id,
+        variant_id: row.variant_id,
+        quantity: row.quantity,
+        unit_price: parseFloat(row.unit_price),
+        total_price: parseFloat(row.total_price),
+      });
+    }
+
+    return Object.values(orderMap);
+
+}
+
 export default{
     createOrder,
     getOrders,
     getOrderById,
     getAllOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    getOrdersByShopId
 }

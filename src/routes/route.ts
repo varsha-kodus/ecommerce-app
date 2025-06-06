@@ -5,8 +5,8 @@ import { createCategory, updateCategory, getCategory, getCategories, updateCateg
 import { createProduct, updateProduct, getProduct, getProducts, updateProductStatus } from "../controllers/productController";
 import { createProductVariant, updateProductVariant, getProductVariant } from "../controllers/productVariantController";
 import { addCartItem, getCartItem, updateCartItem, deleteCartItem, deleteAllCartItem } from "../controllers/cartController";
-import { placeOrder, getOrders, getOrder, getAllOrders, updateOrderStatus, cencelOrder } from "../controllers/orderController";
-import { createProductGallery, setImagePrimary, deleteProductGallery } from "../controllers/productGalleryController";
+import { placeOrder, getOrders, getOrder, getAllOrders, updateOrderStatus, cencelOrder, getOrdersOfSeller } from "../controllers/orderController";
+import { createProductGallery, setImagePrimary, deleteProductGallery, } from "../controllers/productGalleryController";
 import { uploadImage } from "../middleware/upload";
 
 const router = express.Router();
@@ -56,5 +56,8 @@ router.patch("/api/orders/:id/cancel", validateToken , cencelOrder);
 router.post("/api/products/:product_id/gallery", uploadImage.single("file") , createProductGallery);
 router.patch("/api/products/:product_id/gallery/:id/primary" , setImagePrimary);
 router.delete("/api/products/:product_id/gallery/:id" , deleteProductGallery);
+
+
+router.get("/api/seller/orders" , validateToken,  getOrdersOfSeller);
 
 export default router;

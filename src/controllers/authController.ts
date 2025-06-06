@@ -87,10 +87,20 @@ export const loginUser = async (req: Request, res: Response) => {
 
 };
 
-export const currentUser = async (req: Request, res: Response) => {
+export const currentUser = async (req: Request, res: Response) : Promise<void> => {
      const authUser = req as AuthenticatedRequest;
-     const userData = await authService.currentUser(authUser.user.id);
-     res.status(200).json({ ...userData });
+
+    try {
+        const userData = await authService.currentUser(authUser.user.id);
+
+        if (!userData) {
+           res.status(404).json({ error: 'User data not found' });
+        }
+
+        res.status(200).json(userData);
+    } catch (error: any) {
+        res.status(500).json({ success:false, message: error.message });
+    }
 }
 
 export const refreshAccessToken = async (req: Request, res: Response) : Promise<void> => {

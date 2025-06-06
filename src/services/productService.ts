@@ -25,6 +25,21 @@ interface GetProductsParams {
 }
 
 const createProduct = async (productData: Partial<Product>): Promise<Product> => {
+
+  const categoryRes = await pool.query(
+      `SELECT id, status FROM categories WHERE id = $1 LIMIT 1`,
+      [productData.category_id]
+    );
+    if (categoryRes.rows.length === 0) throw new Error("Product not found");
+    
+    const { status } = categoryRes.rows[0];
+     if (status === 'inactive') {
+      throw {
+        success: false,
+        message: "Cannot create product: selected category is currently inactive",
+      };
+    }
+
    const keys: string[] = [];
   const values: any[] = [];
   const placeholders: string[] = [];
@@ -132,6 +147,22 @@ const getProductById = async (productId: string): Promise<any | null> => {
 
 // Update shop details
 const updateProduct = async (productId: string, updateData: Partial<Product>): Promise<Product> => {
+  if(updateData.category_id){
+      const categoryRes = await pool.query(
+        `SELECT id, status FROM categories WHERE id = $1 LIMIT 1`,
+        [updateData.category_id]
+      );
+      if (categoryRes.rows.length === 0) throw new Error("Product not found");
+      
+      const { status } = categoryRes.rows[0];
+        if (status === 'inactive') {
+        throw {
+          success: false,
+          message: "Cannot create product: selected category is currently inactive",
+        };
+      }
+  }
+
   // Build dynamic SET clause for update based on fields present in updateData
   const fields = [];
   const values = [];
